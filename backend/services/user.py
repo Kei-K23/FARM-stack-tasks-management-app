@@ -35,7 +35,7 @@ class UserService:
             query["email"] = {"$regex": f"^{email}$", "$options": "i"}
 
         user_cursor = userCollection.find(query).skip(
-            0).limit(limit).sort("createdAt", -1)
+            skip).limit(limit).sort("created_at", -1)
 
         users = [UserResponse(**prepare_mongo_document(user)) async for user in user_cursor]
         return users
@@ -47,6 +47,12 @@ class UserService:
             raise HTTPException(status_code=404, detail="User not found")
 
         return UserResponse(**prepare_mongo_document(user))
+
+    @staticmethod
+    async def find_with_pass_by_email(email: str):
+        user = await userCollection.find_one({"email": email})
+        if user:
+            return prepare_mongo_document(user)
 
     @staticmethod
     async def update(user_id: str, data: UserUpdate):

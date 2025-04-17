@@ -1,7 +1,6 @@
 import jwt
-from jwt.exceptions import InvalidTokenError
 from datetime import timedelta, datetime, timezone
-from core.config import settings
+from ..core.config import settings
 
 
 def create_access_token(data: dict) -> str:
@@ -11,7 +10,7 @@ def create_access_token(data: dict) -> str:
     """
     to_encode = data.copy()  # Copy access token payload
     expire = datetime.now(timezone.utc) + \
-        timedelta(minutes=settings.access_token_expire_minutes)
+        timedelta(minutes=int(settings.access_token_expire_minutes))
     to_encode.update({"exp": expire})  # Add exp field to the payload
     encoded_jwt = jwt.encode(
         to_encode, settings.secret_key, algorithm=settings.algorithm)

@@ -17,15 +17,15 @@ async def find_all_users():
 
 
 @router.get("/{user_id}", response_model=UserResponse, name="Get user by id")
-async def create_user(user_id: str):
+async def find_user_by_id(user_id: str):
     return await UserService.find_by_id(user_id)
 
 
 @router.patch("/{user_id}", response_model=UserResponse, name="Update user")
-async def create_user(user_id: str, user: UserUpdate):
+async def update_user(user_id: str, user: UserUpdate):
     return await UserService.update(user_id=user_id, data=user)
 
 
 @router.delete("/{user_id}", name="Delete user")
-async def create_user(user_id: str):
+async def delete_user(user_id: str):
     return await UserService.delete(user_id=user_id)
