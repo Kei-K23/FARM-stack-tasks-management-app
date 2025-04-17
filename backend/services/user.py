@@ -1,8 +1,9 @@
-from db.mongo import userCollection
-from schemas.user import UserCreate, UserResponse, UserUpdate
-from models.user import User
+from ..db.mongo import userCollection
+from ..schemas.user import UserCreate, UserResponse, UserUpdate
+from ..schemas.common import prepare_mongo_document
+from ..models.user import User
 from fastapi import HTTPException
-from core.security import get_password_hash
+from ..core.security import get_password_hash
 from datetime import datetime
 from bson import ObjectId
 
@@ -21,7 +22,7 @@ class UserService:
         result = await userCollection.insert_one(user_data)
         user_data["_id"] = result.inserted_id
 
-        return UserResponse(**user_data)
+        return UserResponse(**prepare_mongo_document(user_data))
 
     @staticmethod
     async def find_all(limit: int = 10, skip: int = 0, search: str = "", email: str = ""):
@@ -36,7 +37,7 @@ class UserService:
         user_cursor = userCollection.find(query).skip(
             0).limit(limit).sort("createdAt", -1)
 
-        users = [UserResponse(**user) async for user in user_cursor]
+        users = [UserResponse(**prepare_mongo_document(user)) async for user in user_cursor]
         return users
 
     @staticmethod
@@ -45,7 +46,7 @@ class UserService:
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
-        return UserResponse(**user)
+        return UserResponse(**prepare_mongo_document(user))
 
     @staticmethod
     async def update(user_id: str, data: UserUpdate):

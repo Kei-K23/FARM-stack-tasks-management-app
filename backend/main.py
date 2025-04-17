@@ -1,3 +1,5 @@
-from core import config
+from fastapi import FastAPI
+from .routes.user import router as userRouter
 
-print(config.settings.access_token_expire_minutes)
+app = FastAPI()
+app.include_router(userRouter)

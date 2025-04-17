@@ -1,7 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from schemas.common import PyObjectId
+from ..schemas.common import PyObjectId
 from datetime import datetime
+from bson import ObjectId
 
 
 class UserCreate(BaseModel):
@@ -22,6 +23,10 @@ class UserResponse(BaseModel):
     email: EmailStr
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
 
 
 class Token(BaseModel):
