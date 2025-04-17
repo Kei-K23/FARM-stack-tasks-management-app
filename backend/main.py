@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.exceptions import RequestValidationError
-from .routes import user, auth, task_list
+from .routes import user, auth, task_list, task
 from .core import exception_handlers
 
 app = FastAPI()
@@ -9,6 +9,7 @@ app = FastAPI()
 app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(task_list.router)
+app.include_router(task.router)
 
 # Register exception handlers here
 app.add_exception_handler(

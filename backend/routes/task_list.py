@@ -2,7 +2,7 @@ from fastapi import APIRouter, Query
 from ..schemas.task_list import TaskListResponse, TaskListCreate, TaskListUpdate, TaskListPaginationResponse
 from ..services.task_list import TaskListService
 
-router = APIRouter(prefix="/api/v1/task-lists", tags=["Users"])
+router = APIRouter(prefix="/api/v1/task-lists", tags=["Task Lists"])
 
 
 @router.post("/", response_model=TaskListResponse, status_code=201)
