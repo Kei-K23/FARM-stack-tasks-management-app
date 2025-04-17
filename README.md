@@ -68,6 +68,14 @@ FARM-stack-tasks-management-app/
 
 ---
 
+## 📁 System Design Overview
+
+![class_diagram](/docs/class_diagram.png)
+
+[Class Diagram Draw.io](/docs/Task_Management_Service.drawio)
+
+---
+
 ## ⚙️ Getting Started
 
 ### 1. Clone the Repository
