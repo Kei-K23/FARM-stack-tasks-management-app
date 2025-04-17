@@ -3,4 +3,5 @@ from ..core.config import settings
 
 client = AsyncIOMotorClient(settings.mongo_uri)
 db = client[settings.mongo_db]
-userCollection = db.get_collection("users")
+user_collection = db.get_collection("users")
+task_list_collection = db.get_collection("task_lists")

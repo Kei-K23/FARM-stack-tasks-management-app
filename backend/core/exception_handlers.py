@@ -18,7 +18,7 @@ async def general_exception_handler(req: Request, exc: Exception):
 
 
 async def request_validation_exception_handler(req: Request, exc: RequestValidationError):
-    return error_response(detail=exc.errors(), status_code=500)
+    return error_response(detail=exc.errors(), status_code=400)
 
 
 async def http_exception_handler(req: Request, exc: HTTPException):

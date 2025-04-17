@@ -1,6 +1,6 @@
 from bson import ObjectId
 from typing import Any
-from pydantic import GetCoreSchemaHandler
+from pydantic import GetCoreSchemaHandler, BaseModel
 from pydantic_core import core_schema
 from pydantic.json_schema import GetJsonSchemaHandler
 
@@ -29,6 +29,15 @@ class PyObjectId(ObjectId):
         return {"type": "string"}
 
 
-def prepare_mongo_document(doc: dict) -> dict:
-    doc["_id"] = str(doc["_id"])
-    return doc
+def prepare_mongo_document(doc: Any) -> Any:
+    if isinstance(doc, dict):
+        return {
+            key: prepare_mongo_document(value)
+            for key, value in doc.items()
+        }
+    elif isinstance(doc, list):
+        return [prepare_mongo_document(item) for item in doc]
+    elif isinstance(doc, ObjectId):
+        return str(doc)
+    else:
+        return doc

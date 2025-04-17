@@ -1,4 +1,4 @@
-from ..db.mongo import userCollection
+from ..db.mongo import user_collection
 from ..schemas.user import UserCreate, UserResponse, UserUpdate
 from ..schemas.common import prepare_mongo_document
 from ..models.user import User
@@ -11,7 +11,7 @@ from bson import ObjectId
 class UserService:
     @staticmethod
     async def create(user: UserCreate):
-        if await userCollection.find_one({"email": user.email}):
+        if await user_collection.find_one({"email": user.email}):
             raise HTTPException(
                 status_code=400, detail="Email already registered")
 
@@ -19,7 +19,7 @@ class UserService:
         user_data = User(username=user.username,
                          email=user.email, password=hashed_pass, created_at=datetime.utcnow(), updated_at=datetime.utcnow()).model_dump()
 
-        result = await userCollection.insert_one(user_data)
+        result = await user_collection.insert_one(user_data)
         user_data["_id"] = result.inserted_id
 
         return UserResponse(**prepare_mongo_document(user_data))
@@ -33,16 +33,17 @@ class UserService:
 
         if email:
             query["email"] = {"$regex": f"^{email}$", "$options": "i"}
+        total_count = await user_collection.count_documents(query)
 
-        user_cursor = userCollection.find(query).skip(
+        user_cursor = user_collection.find(query).skip(
             skip).limit(limit).sort("created_at", -1)
 
         users = [UserResponse(**prepare_mongo_document(user)) async for user in user_cursor]
-        return users
+        return {"data": users, "count": total_count}
 
     @staticmethod
     async def find_by_id(user_id: str):
-        user = await userCollection.find_one({"_id": ObjectId(user_id)})
+        user = await user_collection.find_one({"_id": ObjectId(user_id)})
         if not user:
             raise HTTPException(status_code=404, detail="User not found")
 
@@ -50,9 +51,9 @@ class UserService:
 
     @staticmethod
     async def find_with_pass_by_email(email: str):
-        user = await userCollection.find_one({"email": email})
+        user = await user_collection.find_one({"email": email})
         if user:
-            return prepare_mongo_document(user)
+            return user
 
     @staticmethod
     async def update(user_id: str, data: UserUpdate):
@@ -62,7 +63,7 @@ class UserService:
                 update_data["password"])
         update_data["updated_at"] = datetime.utcnow()
 
-        result = await userCollection.update_one({"_id": ObjectId(user_id)}, {"$set": update_data})
+        result = await user_collection.update_one({"_id": ObjectId(user_id)}, {"$set": update_data})
 
         if result.modified_count == 0:
             raise HTTPException(
@@ -71,7 +72,7 @@ class UserService:
 
     @staticmethod
     async def delete(user_id: str):
-        result = await userCollection.delete_one({"_id": ObjectId(user_id)})
+        result = await user_collection.delete_one({"_id": ObjectId(user_id)})
         if result.deleted_count == 0:
             raise HTTPException(
                 status_code=404, detail="User not found")

@@ -3,6 +3,7 @@ from typing import Optional
 from ..schemas.common import PyObjectId
 from datetime import datetime
 from bson import ObjectId
+from typing import List
 
 
 class UserCreate(BaseModel):
@@ -37,3 +38,8 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     user: UserResponse
+
+
+class UserPaginationResponse(BaseModel):
+    data: List[UserResponse]
+    count: int

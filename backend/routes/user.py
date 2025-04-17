@@ -1,5 +1,5 @@
-from fastapi import APIRouter
-from ..schemas.user import UserResponse, UserCreate, UserUpdate
+from fastapi import APIRouter, Query
+from ..schemas.user import UserResponse, UserCreate, UserUpdate, UserPaginationResponse
 from ..services.user import UserService
 from typing import List
 
@@ -11,9 +11,12 @@ async def create_user(user: UserCreate):
     return await UserService.create(user)
 
 
-@router.get("/", response_model=List[UserResponse], name="Get all users")
-async def find_all_users():
-    return await UserService.find_all()
+@router.get("/", response_model=UserPaginationResponse, name="Get all users")
+async def find_all_users(limit: int = Query(10, ge=1, le=100),
+                         skip: int = Query(0, ge=0),
+                         search: str = "",
+                         email: str = ""):
+    return await UserService.find_all(limit=limit, skip=skip, search=search, email=email)
 
 
 @router.get("/{user_id}", response_model=UserResponse, name="Get user by id")
