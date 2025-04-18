@@ -17,7 +17,7 @@ import type { Task, TaskStatus } from "@/lib/types";
 import { KanbanColumn } from "./components/kanban/kanban-column";
 import { KanbanTask } from "./components/kanban/kanban-task";
 
-export default function KanbanBoard() {
+export default function App() {
   const [columns] = useState<TaskStatus[]>([
     { id: "todo", title: "To Do" },
     { id: "in-progress", title: "In Progress" },
