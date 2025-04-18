@@ -14,10 +14,10 @@ import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewTaskDialog } from "@/components/new-task-dialog";
 import type { Task, TaskStatus } from "@/lib/types";
-import { KanbanColumn } from "./components/kanban/kanban-column";
-import { KanbanTask } from "./components/kanban/kanban-task";
+import { KanbanTask } from "@/components/kanban/kanban-task";
+import { KanbanColumn } from "@/components/kanban/kanban-column";
 
-export default function App() {
+export default function TaskLists() {
   const [columns] = useState<TaskStatus[]>([
     { id: "todo", title: "To Do" },
     { id: "in-progress", title: "In Progress" },

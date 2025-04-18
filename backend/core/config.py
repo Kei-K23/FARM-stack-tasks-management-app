@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: str
+    VITE_BACKEND_APP_API_URL: str
 
     model_config = SettingsConfigDict(env_file=".env")
 
