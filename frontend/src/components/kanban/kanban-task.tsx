@@ -1,6 +1,12 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -17,15 +23,13 @@ export function KanbanTask({ task }: KanbanTaskProps) {
 
   return (
     <Card className="group cursor-grab border shadow-sm">
-      <CardHeader className="p-3 pb-0">
-        <CardTitle className="text-sm font-medium">{task.title}</CardTitle>
+      <CardHeader className="px-3 pb-0 pt-1">
+        <CardTitle className="text-base font-medium">{task.title}</CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          {task.description}
+        </CardDescription>
       </CardHeader>
-      <CardContent className="p-3">
-        {task.description && (
-          <p className="mb-2 text-xs text-muted-foreground">
-            {task.description}
-          </p>
-        )}
+      <CardContent className="px-3 pt-0">
         <div className="flex items-center justify-between">
           <Badge
             variant="outline"
