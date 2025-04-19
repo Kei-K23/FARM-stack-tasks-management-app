@@ -41,3 +41,17 @@ def prepare_mongo_document(doc: Any) -> Any:
         return str(doc)
     else:
         return doc
+
+
+def convert_object_ids(data: dict) -> dict:
+    for key, value in data.items():
+        if isinstance(value, ObjectId):
+            data[key] = str(value)
+        elif isinstance(value, list):
+            data[key] = [
+                convert_object_ids(item) if isinstance(item, dict) else item
+                for item in value
+            ]
+        elif isinstance(value, dict):
+            data[key] = convert_object_ids(value)
+    return data

@@ -10,6 +10,6 @@ class Task(BaseModel):
     task_list_id: PyObjectId
     due_date: datetime
     priority: str  # TODO avoid magic string here -> LOW, MEDIUM, HIGH
-    status: str  # TODO avoid magic string here -> TO_DO, IN_PROGRESS, REVIEW, DONE
+    status: str  # TODO avoid magic string here -> OPEN, CLOSE
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

@@ -12,7 +12,7 @@ class TaskCreate(BaseModel):
     task_list_id: str
     due_date: datetime
     priority: str
-    status: str
+    status: str = "OPEN"
 
 
 class TaskUpdate(BaseModel):

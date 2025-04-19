@@ -4,9 +4,9 @@ from datetime import datetime
 from ..schemas.common import PyObjectId
 
 
-class TaskList(BaseModel):
+class Plan(BaseModel):
     title: str
     description: str
-    plan_id: PyObjectId
+    user_id: PyObjectId
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None

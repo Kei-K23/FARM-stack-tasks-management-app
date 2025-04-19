@@ -18,14 +18,16 @@ class TaskService:
         return TaskResponse(**prepare_mongo_document(task_data))
 
     @staticmethod
-    async def find_all(task_list_id: str, limit: int = 10, skip: int = 0, search: str = ""):
+    async def find_all(task_list_id: str = None, limit: int = 10, skip: int = 0, search: str = ""):
         query = {}
-        try:
-            task_list_obj_id = ObjectId(task_list_id)
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid task_list_id")
 
-        query = {"task_list_id": task_list_obj_id}
+        if task_list_id:
+            try:
+                task_list_obj_id = ObjectId(task_list_id)
+            except Exception:
+                raise HTTPException(
+                    status_code=400, detail="Invalid task_list_id")
+            query = {"task_list_id": task_list_obj_id}
 
         if search:
             query["title"] = {"$regex": search, "$options": "i"}

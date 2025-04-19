@@ -1,29 +1,28 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from .common import PyObjectId
-from .task import TaskResponse
+from .task_list import TaskListResponse
 from datetime import datetime
 from bson import ObjectId
-from typing import List, Union
+from typing import List
 
 
-class TaskListCreate(BaseModel):
+class PlanCreate(BaseModel):
     title: str
     description: str
-    plan_id: str
+    user_id: str
 
 
-class TaskListUpdate(BaseModel):
+class PlanUpdate(BaseModel):
     title: Optional[str] = None
     description: Optional[str] = None
-    plan_id: Optional[str] = None
 
 
-class TaskListResponse(BaseModel):
+class PlanResponse(BaseModel):
     id: PyObjectId = Field(alias="_id")
     title: str
     description: str
-    plan_id: PyObjectId = Field(alias="plan_id")
+    user_id: PyObjectId = Field(alias="user_id")
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
@@ -32,12 +31,12 @@ class TaskListResponse(BaseModel):
         json_encoders = {ObjectId: str}
 
 
-class TaskListWithTasksResponse(BaseModel):
+class PlanResponseWithTaskLists(BaseModel):
     id: PyObjectId = Field(alias="_id")
     title: str
     description: str
-    plan_id: PyObjectId = Field(alias="plan_id")
-    tasks: Optional[List[TaskResponse]] = []
+    user_id: PyObjectId = Field(alias="user_id")
+    task_lists: List[TaskListResponse]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 
@@ -46,6 +45,6 @@ class TaskListWithTasksResponse(BaseModel):
         json_encoders = {ObjectId: str}
 
 
-class TaskListPaginationResponse(BaseModel):
-    data: Union[List[TaskListResponse], List[TaskListWithTasksResponse]]
+class PlanPaginationResponse(BaseModel):
+    data: List[PlanResponse]
     count: int

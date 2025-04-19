@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
-from .routes import user, auth, task_list, task
+from .routes import user, auth, task_list, task, plan
 from .core import exception_handlers
 import os
 
@@ -23,6 +23,7 @@ app.include_router(auth.router)
 app.include_router(user.router)
 app.include_router(task_list.router)
 app.include_router(task.router)
+app.include_router(plan.router)
 
 # --- Register exception handlers ---
 app.add_exception_handler(
