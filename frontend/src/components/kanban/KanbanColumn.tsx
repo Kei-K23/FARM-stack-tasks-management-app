@@ -7,7 +7,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import type { Task, TaskStatus } from "@/lib/types";
-import { KanbanTaskItem } from "./kanban-task-item";
+import { KanbanTaskItem } from "./KanbanTaskItem";
 
 interface KanbanColumnProps {
   column: TaskStatus;

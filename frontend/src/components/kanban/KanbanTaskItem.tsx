@@ -10,8 +10,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EditTaskDialog } from "../edit-task-dialog";
-import { KanbanTask } from "./kanban-task";
+import { EditTaskDialog } from "./EditTaskDialog";
+import { KanbanTask } from "./KanbanTask";
 
 interface KanbanTaskItemProps {
   task: Task;

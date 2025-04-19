@@ -1,4 +1,4 @@
-import { RegisterForm } from "@/components/RegisterForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";
 import { GalleryVerticalEnd } from "lucide-react";
 
 export default function Register() {
@@ -9,7 +9,7 @@ export default function Register() {
           <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <GalleryVerticalEnd className="size-4" />
           </div>
-          Acme Inc.
+          Task-Tasks
         </a>
         <RegisterForm />
       </div>

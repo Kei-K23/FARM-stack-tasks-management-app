@@ -20,6 +20,14 @@ export interface User {
   updated_at: Date;
 }
 
+export interface ErrorResponse {
+  success: boolean;
+  error: {
+    code: number;
+    message: string;
+  };
+}
+
 export interface Token {
   access_token: string;
   user: User;

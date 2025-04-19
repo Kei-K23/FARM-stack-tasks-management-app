@@ -12,10 +12,10 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NewTaskDialog } from "@/components/new-task-dialog";
 import type { Task, TaskStatus } from "@/lib/types";
-import { KanbanTask } from "@/components/kanban/kanban-task";
-import { KanbanColumn } from "@/components/kanban/kanban-column";
+import { KanbanColumn } from "@/components/kanban/KanbanColumn";
+import { KanbanTask } from "@/components/kanban/KanbanTask";
+import { NewTaskDialog } from "@/components/kanban/NewTaskDialog";
 
 export default function TaskLists() {
   const [columns] = useState<TaskStatus[]>([

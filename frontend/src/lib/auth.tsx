@@ -1,14 +1,15 @@
 import api from "@/lib/axios";
 import Cookies from "js-cookie";
-import { createContext, useContext } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { User } from "./types";
 import constant from "./constant";
 
 interface AuthContextProps {
   user?: User | null;
-  loading: boolean;
+  isLoading: boolean;
   login: (accessToken: string, user: User) => void;
+  setUser: (user: User | null) => void;
   logout: () => Promise<void>;
 }
 
@@ -19,13 +20,14 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null);
   const queryClient = useQueryClient();
 
   // Fetch the user details if a refresh token is present
-  const { isLoading, data: user } = useQuery<User>({
+  const { isLoading, data } = useQuery<User>({
     queryKey: ["auth", "profile"],
     queryFn: async () => {
-      const res = await api.get("/api/auth/profile");
+      const res = await api.get("/api/v1/auth/profile");
       return res.data;
     },
     retry: false,
@@ -35,19 +37,31 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     Cookies.set(constant.ACCESS_TOKEN_KEY, accessToken, {
       expires: constant.ACCESS_TOKEN_EXPIRE,
     });
+    setUser(user);
     queryClient.setQueryData(["auth", "profile"], user);
   };
 
   const logout = async () => {
     Cookies.remove(constant.ACCESS_TOKEN_KEY);
-    queryClient.removeQueries({ queryKey: ["authUser"] });
+    setUser(null);
+    queryClient.removeQueries({ queryKey: ["auth", "profile"] });
   };
+
+  useEffect(() => {
+    if (data && !isLoading) {
+      setUser(data);
+    }
+    if (!data && !isLoading) {
+      setUser(null);
+    }
+  }, [data, isLoading]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        loading: isLoading,
+        setUser,
+        isLoading,
         login,
         logout,
       }}

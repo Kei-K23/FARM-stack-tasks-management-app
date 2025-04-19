@@ -1,4 +1,4 @@
-import About from "@/pages/About";
+import AuthGuard from "@/components/auth/AuthGuard";
 import Home from "@/pages/Home";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
@@ -9,11 +9,19 @@ import { createBrowserRouter } from "react-router";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <Home />,
+    element: (
+      <AuthGuard>
+        <Home />
+      </AuthGuard>
+    ),
   },
   {
     path: "/task-lists",
-    element: <TaskLists />,
+    element: (
+      <AuthGuard>
+        <TaskLists />
+      </AuthGuard>
+    ),
   },
   {
     path: "/login",
@@ -22,10 +30,6 @@ const router = createBrowserRouter([
   {
     path: "/sign-up",
     element: <Register />,
-  },
-  {
-    path: "/about",
-    element: <About />,
   },
   {
     path: "*",
