@@ -105,11 +105,12 @@ pip install -r requirements.txt
 #### 🔹 Environment Variables (`.env`)
 
 ```env
-MONGO_URI=mongodb://localhost:27017
-MONGO_DB=taskdb
-SECRET_KEY=your_jwt_secret_key
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+mongo_uri=mongodb://mongo:mongo@localhost:27017/tasks_management_db?authSource=admin
+mongo_db=tasks_management_db
+secret_key=881d54fb021110ba68d1eaaab1dd2df4901b58ee329b065844bfc1c6d014f3b0
+algorithm=HS256
+access_token_expire_minutes=3600
+VITE_BACKEND_APP_API_URL=http://localhost:8000
 ```
 
 #### 🔹 Run the server
