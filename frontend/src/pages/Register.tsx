@@ -1,7 +1,22 @@
 import { RegisterForm } from "@/components/auth/RegisterForm";
+import { useAuth } from "@/lib/auth";
 import { GalleryVerticalEnd } from "lucide-react";
+import { useEffect } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 export default function Register() {
+  const auth = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!auth.isLoading && auth.user) {
+      const from = location.state?.from?.pathname || "/";
+      navigate(from);
+      return;
+    }
+  }, []);
+
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 bg-muted p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">

@@ -1,10 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from .common import PyObjectId
-from .task_list import TaskListResponse
+from .task_list import TaskListResponse, TaskListWithTasksResponse
 from datetime import datetime
 from bson import ObjectId
-from typing import List
+from typing import List, Union
 
 
 class PlanCreate(BaseModel):
@@ -45,6 +45,20 @@ class PlanResponseWithTaskLists(BaseModel):
         json_encoders = {ObjectId: str}
 
 
+class PlanResponseWithAll(BaseModel):
+    id: PyObjectId = Field(alias="_id")
+    title: str
+    description: str
+    user_id: PyObjectId = Field(alias="user_id")
+    task_lists: List[TaskListWithTasksResponse]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    class Config:
+        arbitrary_types_allowed = True
+        json_encoders = {ObjectId: str}
+
+
 class PlanPaginationResponse(BaseModel):
-    data: List[PlanResponse]
+    data: Union[List[PlanResponse], List[PlanResponseWithAll]]
     count: int

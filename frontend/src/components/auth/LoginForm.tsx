@@ -73,12 +73,6 @@ export function LoginForm({
     mutation.mutate(data);
   }
 
-  if (!auth.isLoading && auth.user) {
-    const from = location.state?.from?.pathname || "/";
-    navigate(from);
-    return;
-  }
-
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>

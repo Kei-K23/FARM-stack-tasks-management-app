@@ -57,6 +57,35 @@ class TaskListService:
         return {"data":  task_lists_with_tasks if include_tasks else task_lists, "count": total_count}
 
     @staticmethod
+    async def find_all_with_tasks(plan_id: str = None):
+        query = {}
+
+        if plan_id:
+            try:
+                plan_obj_id = ObjectId(plan_id)
+            except Exception:
+                raise HTTPException(
+                    status_code=400, detail="Invalid plan_id")
+            query = {"plan_id": plan_obj_id}
+
+        task_list_cursor = task_list_collection.find(
+            query).sort("created_at", -1)
+
+        task_lists_with_tasks = []
+        async for task_list in task_list_cursor:
+            task_list_dict = prepare_mongo_document(task_list)
+
+            tasks_cursor = task_collection.find(
+                {"task_list_id": ObjectId(task_list_dict["_id"])})
+            tasks = [TaskResponse(**prepare_mongo_document(task)) async for task in tasks_cursor]
+
+            task_list_dict["tasks"] = tasks
+            task_lists_with_tasks.append(
+                TaskListWithTasksResponse(**task_list_dict))
+
+        return task_lists_with_tasks
+
+    @staticmethod
     async def find_by_id(task_list_id: str):
         task_list = await task_list_collection.find_one({"_id": ObjectId(task_list_id)})
         if not task_list:

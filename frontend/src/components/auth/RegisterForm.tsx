@@ -8,9 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Link, useLocation, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import z from "zod";
-import { useAuth } from "@/lib/auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -46,9 +45,7 @@ export function RegisterForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const auth = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const form = useForm<RegisterInput>({
     resolver: zodResolver(registerSchema),
@@ -73,12 +70,6 @@ export function RegisterForm({
 
   function onSubmit(data: RegisterInput) {
     mutation.mutate(data);
-  }
-
-  if (!auth.isLoading && auth.user) {
-    const from = location.state?.from?.pathname || "/";
-    navigate(from);
-    return;
   }
 
   return (
