@@ -54,6 +54,8 @@ class UserService:
         user = await user_collection.find_one({"email": email})
         if user:
             return user
+        else:
+            return None
 
     @staticmethod
     async def update(user_id: str, data: UserUpdate):

@@ -1,4 +1,5 @@
 import jwt
+from fastapi import HTTPException
 from datetime import timedelta, datetime, timezone
 from ..core.config import settings
 
@@ -19,4 +20,8 @@ def create_access_token(data: dict) -> str:
 
 def decode_token(token: str):
     """Decode the token"""
-    return jwt.decode(jwt=token, key=settings.secret_key, algorithms=[settings.algorithm])
+    try:
+        return jwt.decode(jwt=token, key=settings.secret_key, algorithms=[settings.algorithm])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token",
+                            headers={"WWW-Authenticate": "Bearer"},)
