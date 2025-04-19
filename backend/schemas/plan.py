@@ -36,7 +36,7 @@ class PlanResponseWithTaskLists(BaseModel):
     title: str
     description: str
     user_id: PyObjectId = Field(alias="user_id")
-    task_lists: List[TaskListResponse]
+    task_lists: Union[List[TaskListResponse], List[TaskListWithTasksResponse]]
     created_at: Optional[datetime]
     updated_at: Optional[datetime]
 

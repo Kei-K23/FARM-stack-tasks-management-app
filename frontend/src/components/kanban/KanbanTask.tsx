@@ -1,4 +1,3 @@
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -7,11 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { Task } from "@/lib/types";
+import type { ITask } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface KanbanTaskProps {
-  task: Task;
+  task: ITask;
 }
 
 export function KanbanTask({ task }: KanbanTaskProps) {
@@ -41,13 +40,13 @@ export function KanbanTask({ task }: KanbanTaskProps) {
             {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
           </Badge>
 
-          {task.assignee && (
+          {/* {task.assignee && (
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs">
                 {task.assignee.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-          )}
+          )} */}
         </div>
       </CardContent>
     </Card>

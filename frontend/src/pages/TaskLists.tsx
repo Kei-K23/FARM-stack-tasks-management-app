@@ -12,20 +12,27 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { ITask, Plan } from "@/lib/types";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { KanbanTask } from "@/components/kanban/KanbanTask";
 import { NewTaskDialog } from "@/components/kanban/NewTaskDialog";
+import { useParams } from "react-router";
+import api from "@/lib/axios";
+import { useQuery } from "@tanstack/react-query";
 
 export default function TaskLists() {
-  const [columns] = useState<TaskStatus[]>([
-    { id: "todo", title: "To Do" },
-    { id: "in-progress", title: "In Progress" },
-    { id: "review", title: "Review" },
-    { id: "done", title: "Done" },
-  ]);
+  let { plan_id } = useParams();
 
-  const [tasks, setTasks] = useState<Task[]>(() => {
+  const { isLoading, data: plan } = useQuery<Plan>({
+    queryKey: ["plans", plan_id, "include_all"],
+    queryFn: async () => {
+      const res = await api.get(`/api/v1/plans/${plan_id}?include_all=true`);
+      return res?.data;
+    },
+    retry: false,
+  });
+
+  const [tasks, setTasks] = useState<ITask[]>(() => {
     // Try to load from localStorage on client side
     if (typeof window !== "undefined") {
       const savedTasks = localStorage.getItem("kanban-tasks");
@@ -41,7 +48,7 @@ export default function TaskLists() {
     // Default tasks
     return [
       {
-        id: "task-1",
+        _id: "task-1",
         title: "Research competitors",
         description: "Analyze top 5 competitors in the market",
         status: "todo",
@@ -49,7 +56,7 @@ export default function TaskLists() {
         assignee: "Alex",
       },
       {
-        id: "task-2",
+        _id: "task-2",
         title: "Design homepage mockup",
         description: "Create wireframes for the new homepage",
         status: "in-progress",
@@ -57,7 +64,7 @@ export default function TaskLists() {
         assignee: "Sam",
       },
       {
-        id: "task-3",
+        _id: "task-3",
         title: "Fix navigation bug",
         description: "Mobile menu doesn't close when clicking outside",
         status: "review",
@@ -65,7 +72,7 @@ export default function TaskLists() {
         assignee: "Taylor",
       },
       {
-        id: "task-4",
+        _id: "task-4",
         title: "Update documentation",
         description: "Add new API endpoints to the docs",
         status: "done",
@@ -74,16 +81,8 @@ export default function TaskLists() {
       },
     ];
   });
-
-  const [activeTask, setActiveTask] = useState<Task | null>(null);
+  const [activeTask, setActiveTask] = useState<ITask | null>(null);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
-
-  // Save tasks to localStorage whenever they change
-  useState(() => {
-    if (typeof window !== "undefined") {
-      localStorage.setItem("kanban-tasks", JSON.stringify(tasks));
-    }
-  });
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -96,7 +95,7 @@ export default function TaskLists() {
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
     const activeTaskId = active.id as string;
-    const task = tasks.find((t) => t.id === activeTaskId);
+    const task = tasks.find((t) => t._id === activeTaskId);
     if (task) {
       setActiveTask(task);
     }
@@ -110,15 +109,15 @@ export default function TaskLists() {
     const overId = over.id as string;
 
     // Find the active task
-    const activeTask = tasks.find((task) => task.id === activeId);
+    const activeTask = tasks.find((task) => task._id === activeId);
     if (!activeTask) return;
 
     // Check if over a column
-    const isOverColumn = columns.some((col) => col.id === overId);
+    const isOverColumn = plan?.task_lists?.some((col) => col._id === overId);
     if (isOverColumn) {
       setTasks((tasks) =>
         tasks.map((task) => {
-          if (task.id === activeId) {
+          if (task._id === activeId) {
             return { ...task, status: overId };
           }
           return task;
@@ -139,14 +138,14 @@ export default function TaskLists() {
     if (activeId === overId) return;
 
     // Find the tasks in the same column
-    const activeTask = tasks.find((task) => task.id === activeId);
+    const activeTask = tasks.find((task) => task._id === activeId);
     if (!activeTask) return;
 
     // If over a task, reorder within the column
-    const isOverTask = tasks.some((task) => task.id === overId);
+    const isOverTask = tasks.some((task) => task._id === overId);
     if (isOverTask) {
-      const activeIndex = tasks.findIndex((task) => task.id === activeId);
-      const overIndex = tasks.findIndex((task) => task.id === overId);
+      const activeIndex = tasks.findIndex((task) => task._id === activeId);
+      const overIndex = tasks.findIndex((task) => task._id === overId);
 
       // If tasks are in the same column, reorder them
       const overTask = tasks[overIndex];
@@ -157,10 +156,10 @@ export default function TaskLists() {
     }
   }
 
-  function handleAddTask(task: Omit<Task, "id">) {
-    const newTask: Task = {
+  function handleAddTask(task: Omit<ITask, "_id">) {
+    const newTask: ITask = {
       ...task,
-      id: `task-${Date.now()}`,
+      _id: `task-${Date.now()}`,
     };
 
     setTasks((prev) => [...prev, newTask]);
@@ -168,22 +167,22 @@ export default function TaskLists() {
   }
 
   function handleDeleteTask(taskId: string) {
-    setTasks((prev) => prev.filter((task) => task.id !== taskId));
+    setTasks((prev) => prev.filter((task) => task._id !== taskId));
   }
 
-  function handleEditTask(updatedTask: Task) {
+  function handleEditTask(updatedTask: ITask) {
     setTasks((prev) =>
-      prev.map((task) => (task.id === updatedTask.id ? updatedTask : task))
+      prev.map((task) => (task._id === updatedTask._id ? updatedTask : task))
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
-        <h1 className="text-xl font-semibold">Kanban Board</h1>
+        <h1 className="text-xl font-semibold">{plan?.title}</h1>
         <Button onClick={() => setIsNewTaskDialogOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Task
+          Add Task List
         </Button>
       </header>
 
@@ -195,11 +194,13 @@ export default function TaskLists() {
           onDragEnd={handleDragEnd}
         >
           <div className="flex gap-4">
-            {columns.map((column) => (
+            {plan?.task_lists?.map((taskList) => (
               <KanbanColumn
-                key={column.id}
-                column={column}
-                tasks={tasks.filter((task) => task.status === column.id)}
+                key={taskList._id}
+                column={taskList}
+                tasks={taskList?.tasks?.filter(
+                  (task) => task.task_list_id === taskList._id
+                )}
                 onDeleteTask={handleDeleteTask}
                 onEditTask={handleEditTask}
               />
@@ -216,7 +217,8 @@ export default function TaskLists() {
         open={isNewTaskDialogOpen}
         onOpenChange={setIsNewTaskDialogOpen}
         onAddTask={handleAddTask}
-        columns={columns}
+        columns={plan?.task_lists!}
+        isLoadingColumns={isLoading}
       />
     </div>
   );

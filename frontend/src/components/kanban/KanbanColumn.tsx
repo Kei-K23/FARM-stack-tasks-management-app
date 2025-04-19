@@ -4,16 +4,15 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-
 import { cn } from "@/lib/utils";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { ITask, TaskStatus } from "@/lib/types";
 import { KanbanTaskItem } from "./KanbanTaskItem";
 
 interface KanbanColumnProps {
   column: TaskStatus;
-  tasks: Task[];
+  tasks: ITask[];
   onDeleteTask: (id: string) => void;
-  onEditTask: (task: Task) => void;
+  onEditTask: (task: ITask) => void;
 }
 
 export function KanbanColumn({
@@ -23,10 +22,10 @@ export function KanbanColumn({
   onEditTask,
 }: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
-    id: column.id,
+    id: column._id,
   });
 
-  const taskIds = useMemo(() => tasks.map((task) => task.id), [tasks]);
+  const taskIds = useMemo(() => tasks.map((task) => task._id), [tasks]);
 
   return (
     <div
@@ -47,7 +46,7 @@ export function KanbanColumn({
         <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
           {tasks.map((task) => (
             <KanbanTaskItem
-              key={task.id}
+              key={task._id}
               task={task}
               onDelete={onDeleteTask}
               onEdit={onEditTask}

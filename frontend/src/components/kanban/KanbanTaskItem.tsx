@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Edit3, MoreHorizontal, Trash2 } from "lucide-react";
-import type { Task } from "@/lib/types";
+import type { ITask } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -14,9 +14,9 @@ import { EditTaskDialog } from "./EditTaskDialog";
 import { KanbanTask } from "./KanbanTask";
 
 interface KanbanTaskItemProps {
-  task: Task;
+  task: ITask;
   onDelete: (id: string) => void;
-  onEdit: (task: Task) => void;
+  onEdit: (task: ITask) => void;
 }
 
 export function KanbanTaskItem({
@@ -34,7 +34,7 @@ export function KanbanTaskItem({
     transition,
     isDragging,
   } = useSortable({
-    id: task.id,
+    id: task._id,
     data: {
       type: "task",
       task,
@@ -74,7 +74,7 @@ export function KanbanTaskItem({
               <Edit3 className="h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(task.id)}>
+            <DropdownMenuItem onClick={() => onDelete(task._id)}>
               <Trash2 className="h-4 w-4" />
               Delete
             </DropdownMenuItem>

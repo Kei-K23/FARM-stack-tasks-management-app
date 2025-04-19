@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Progress } from "@/components/ui/progress";
 import { Plan } from "@/lib/types";
+import { Link } from "react-router";
 
 interface PlanCardProps {
   plan: Plan;
@@ -171,9 +172,11 @@ export function PlanCard({ plan }: PlanCardProps) {
                 </div>
               </div>
 
-              <Button variant="outline" size="sm" className="w-full text-xs">
-                View All Tasks
-              </Button>
+              <Link to={`/${plan._id}/task-lists`}>
+                <Button variant="outline" size="sm" className="w-full text-xs">
+                  View All Tasks
+                </Button>
+              </Link>
             </div>
           )}
         </div>

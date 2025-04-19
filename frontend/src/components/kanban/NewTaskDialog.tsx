@@ -1,8 +1,6 @@
 import type React from "react";
-
 import { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { ITask, TaskList } from "@/lib/types";
 import {
   Popover,
   PopoverContent,
@@ -34,8 +32,9 @@ import { cn } from "@/lib/utils";
 interface NewTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTask: (task: Omit<Task, "id">) => void;
-  columns: TaskStatus[];
+  onAddTask: (task: Omit<ITask, "_id">) => void;
+  columns: TaskList[];
+  isLoadingColumns: boolean;
 }
 
 export function NewTaskDialog({
@@ -43,12 +42,12 @@ export function NewTaskDialog({
   onOpenChange,
   onAddTask,
   columns,
+  isLoadingColumns,
 }: NewTaskDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("todo");
   const [priority, setPriority] = useState("medium");
-  const [assignee, setAssignee] = useState("");
 
   const [openStatusCombobox, setOpenStatusCombobox] = useState(false);
   const [openPriorityCombobox, setOpenPriorityCombobox] = useState(false);
@@ -69,7 +68,6 @@ export function NewTaskDialog({
       description,
       status,
       priority,
-      assignee,
     });
 
     // Reset form
@@ -77,7 +75,6 @@ export function NewTaskDialog({
     setDescription("");
     setStatus("todo");
     setPriority("medium");
-    setAssignee("");
   }
 
   return (
@@ -125,9 +122,14 @@ export function NewTaskDialog({
                       aria-expanded={openStatusCombobox}
                       className="justify-between"
                     >
-                      {status
-                        ? columns.find((column) => column.id === status)?.title
-                        : "Select status"}
+                      {isLoadingColumns ? (
+                        <p>Loading...</p>
+                      ) : status ? (
+                        columns?.find?.((column) => column._id === status)
+                          ?.title
+                      ) : (
+                        "Select status"
+                      )}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -137,26 +139,30 @@ export function NewTaskDialog({
                       <CommandList>
                         <CommandEmpty>No status found.</CommandEmpty>
                         <CommandGroup>
-                          {columns.map((column) => (
-                            <CommandItem
-                              key={column.id}
-                              value={column.id}
-                              onSelect={(currentValue) => {
-                                setStatus(currentValue);
-                                setOpenStatusCombobox(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  status === column.id
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {column.title}
-                            </CommandItem>
-                          ))}
+                          {isLoadingColumns ? (
+                            <p>Loading...</p>
+                          ) : (
+                            columns?.map?.((column) => (
+                              <CommandItem
+                                key={column._id}
+                                value={column._id}
+                                onSelect={(currentValue) => {
+                                  setStatus(currentValue);
+                                  setOpenStatusCombobox(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    status === column._id
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {column.title}
+                              </CommandItem>
+                            ))
+                          )}
                         </CommandGroup>
                       </CommandList>
                     </Command>
@@ -214,15 +220,6 @@ export function NewTaskDialog({
                   </PopoverContent>
                 </Popover>
               </div>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="assignee">Assignee</Label>
-              <Input
-                id="assignee"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                placeholder="Task assignee"
-              />
             </div>
           </div>
           <DialogFooter>

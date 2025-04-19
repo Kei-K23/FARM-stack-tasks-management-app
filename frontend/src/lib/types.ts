@@ -8,7 +8,7 @@ export interface Task {
 }
 
 export interface TaskStatus {
-  id: string;
+  _id: string;
   title: string;
 }
 

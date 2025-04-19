@@ -15,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { Task } from "@/lib/types";
+import type { ITask } from "@/lib/types";
 import {
   Popover,
   PopoverContent,
@@ -34,8 +34,8 @@ import { cn } from "@/lib/utils";
 interface EditTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  task: Task;
-  onSave: (task: Task) => void;
+  task: ITask;
+  onSave: (task: ITask) => void;
 }
 
 export function EditTaskDialog({
@@ -48,7 +48,6 @@ export function EditTaskDialog({
   const [description, setDescription] = useState(task.description);
   const [status, setStatus] = useState(task.status);
   const [priority, setPriority] = useState(task.priority);
-  const [assignee, setAssignee] = useState(task.assignee);
 
   const [openPriorityCombobox, setOpenPriorityCombobox] = useState(false);
 
@@ -64,7 +63,6 @@ export function EditTaskDialog({
     setDescription(task.description);
     setStatus(task.status);
     setPriority(task.priority);
-    setAssignee(task.assignee);
   }, [task]);
 
   function handleSubmit(e: React.FormEvent) {
@@ -78,7 +76,6 @@ export function EditTaskDialog({
       description,
       status,
       priority,
-      assignee,
     });
 
     onOpenChange(false);
@@ -165,15 +162,6 @@ export function EditTaskDialog({
                   </Command>
                 </PopoverContent>
               </Popover>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="edit-assignee">Assignee</Label>
-              <Input
-                id="edit-assignee"
-                value={assignee}
-                onChange={(e) => setAssignee(e.target.value)}
-                placeholder="Task assignee"
-              />
             </div>
           </div>
           <DialogFooter>

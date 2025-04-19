@@ -16,7 +16,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/task-lists",
+    path: "/:plan_id/task-lists",
     element: (
       <AuthGuard>
         <TaskLists />
