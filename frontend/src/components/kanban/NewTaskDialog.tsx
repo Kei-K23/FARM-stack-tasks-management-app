@@ -40,7 +40,6 @@ interface NewTaskDialogProps {
 export function NewTaskDialog({
   open,
   onOpenChange,
-  onAddTask,
   columns,
   isLoadingColumns,
 }: NewTaskDialogProps) {
@@ -62,13 +61,6 @@ export function NewTaskDialog({
     e.preventDefault();
 
     if (!title.trim()) return;
-
-    onAddTask({
-      title,
-      description,
-      status,
-      priority,
-    });
 
     // Reset form
     setTitle("");
