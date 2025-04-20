@@ -74,8 +74,6 @@ export function TaskListMutationDialog({
   });
 
   function onSubmit(data: TaskListInput) {
-    console.log(data);
-
     mutation.mutate(data);
   }
 

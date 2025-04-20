@@ -1,6 +1,3 @@
-import type React from "react";
-import { useState } from "react";
-import { Check, ChevronsUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,212 +8,207 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { TaskList } from "@/lib/types";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "../ui/form";
+import z from "zod";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import api from "@/lib/axios";
+import { toast } from "sonner";
+import DatePicker from "../ui/date-picker";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
-interface TaskListMutationDialogProps {
+interface TaskMutationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  columns: TaskList[];
-  isLoadingColumns: boolean;
+  task_list_id: string;
+  plan_id: string;
 }
 
-export function TaskListMutationDialog({
+interface TaskInput {
+  title: string;
+  description: string;
+  task_list_id: string;
+  due_date: Date;
+  priority: string;
+  status: string;
+}
+
+const taskSchema = z.object({
+  title: z.string({ required_error: "Title is required" }).trim(),
+  description: z.string({ required_error: "Description is required" }).trim(),
+  task_list_id: z.string({ required_error: "Task list id is required" }),
+  due_date: z.date({ required_error: "Due date is required" }),
+  priority: z.string({ required_error: "Priority is required" }),
+  status: z.string({ required_error: "Status is required" }),
+});
+
+export function TaskMutationDialog({
   open,
   onOpenChange,
-  columns,
-  isLoadingColumns,
-}: TaskListMutationDialogProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [status, setStatus] = useState("todo");
-  const [priority, setPriority] = useState("medium");
+  task_list_id,
+  plan_id,
+}: TaskMutationDialogProps) {
+  const queryclient = useQueryClient();
+  const form = useForm<TaskInput>({
+    resolver: zodResolver(taskSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      task_list_id: task_list_id,
+    },
+  });
 
-  const [openStatusCombobox, setOpenStatusCombobox] = useState(false);
-  const [openPriorityCombobox, setOpenPriorityCombobox] = useState(false);
+  const mutation = useMutation({
+    mutationFn: (data: TaskInput) =>
+      api
+        .post(`/api/v1/plans/${plan_id}/task-lists/${task_list_id}/tasks`, data)
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("New task added");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
 
-  const priorities = [
-    { value: "low", label: "Low" },
-    { value: "medium", label: "Medium" },
-    { value: "high", label: "High" },
-  ];
-
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-
-    if (!title.trim()) return;
-
-    // Reset form
-    setTitle("");
-    setDescription("");
-    setStatus("todo");
-    setPriority("medium");
+  function onSubmit(data: TaskInput) {
+    mutation.mutate(data);
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
-        <form onSubmit={handleSubmit}>
-          <DialogHeader>
-            <DialogTitle>Add New Task</DialogTitle>
-            <DialogDescription>
-              Create a new task for your board. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
-              <Label htmlFor="title">Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Task title"
-                required
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <DialogHeader>
+              <DialogTitle>Add New Task</DialogTitle>
+              <DialogDescription>
+                Create a new task for your board. Click save when you're done.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="title">Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="title"
+                        disabled={mutation.isPending}
+                        placeholder="Learn Python"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel htmlFor="description">Description</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="description"
+                        disabled={mutation.isPending}
+                        placeholder="Learn Python for AI/ML"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="due_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Due Date</FormLabel>
+                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Priority</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select task priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="w-full">
+                        <SelectItem value="HIGH">HIGH</SelectItem>
+                        <SelectItem value="MEDIUM">MEDIUM</SelectItem>
+                        <SelectItem value="LOW">LOW</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select task priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent className="w-full">
+                        <SelectItem value="OPEN">OPEN</SelectItem>
+                        <SelectItem value="CLOSE">CLOSE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-            <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Task description"
-                className="resize-none"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="status">Status</Label>
-                <Popover
-                  open={openStatusCombobox}
-                  onOpenChange={setOpenStatusCombobox}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openStatusCombobox}
-                      className="justify-between"
-                    >
-                      {isLoadingColumns ? (
-                        <p>Loading...</p>
-                      ) : status ? (
-                        columns?.find?.((column) => column._id === status)
-                          ?.title
-                      ) : (
-                        "Select status"
-                      )}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0">
-                    <Command>
-                      <CommandInput placeholder="Search status..." />
-                      <CommandList>
-                        <CommandEmpty>No status found.</CommandEmpty>
-                        <CommandGroup>
-                          {isLoadingColumns ? (
-                            <p>Loading...</p>
-                          ) : (
-                            columns?.map?.((column) => (
-                              <CommandItem
-                                key={column._id}
-                                value={column._id}
-                                onSelect={(currentValue) => {
-                                  setStatus(currentValue);
-                                  setOpenStatusCombobox(false);
-                                }}
-                              >
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    status === column._id
-                                      ? "opacity-100"
-                                      : "opacity-0"
-                                  )}
-                                />
-                                {column.title}
-                              </CommandItem>
-                            ))
-                          )}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="priority">Priority</Label>
-                <Popover
-                  open={openPriorityCombobox}
-                  onOpenChange={setOpenPriorityCombobox}
-                >
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={openPriorityCombobox}
-                      className="justify-between"
-                    >
-                      {priority
-                        ? priorities.find((p) => p.value === priority)?.label
-                        : "Select priority"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="p-0">
-                    <Command>
-                      <CommandInput placeholder="Search priority..." />
-                      <CommandList>
-                        <CommandEmpty>No priority found.</CommandEmpty>
-                        <CommandGroup>
-                          {priorities.map((p) => (
-                            <CommandItem
-                              key={p.value}
-                              value={p.value}
-                              onSelect={(currentValue) => {
-                                setPriority(currentValue);
-                                setOpenPriorityCombobox(false);
-                              }}
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  priority === p.value
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {p.label}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit">Save</Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter>
+              <Button type="submit">Save</Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

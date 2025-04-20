@@ -23,7 +23,7 @@ import { TaskListMutationDialog } from "@/components/kanban/TaskListMutationDial
 export default function TaskLists() {
   let { plan_id } = useParams();
 
-  const { isLoading, data: plan } = useQuery<Plan>({
+  const { data: plan } = useQuery<Plan>({
     queryKey: ["plans", plan_id, "include_all"],
     queryFn: async () => {
       const res = await api.get(`/api/v1/plans/${plan_id}?include_all=true`);
@@ -196,6 +196,7 @@ export default function TaskLists() {
           <div className="flex gap-4">
             {plan?.task_lists?.map((taskList) => (
               <KanbanColumn
+                plan_id={plan_id!}
                 key={taskList._id}
                 column={taskList}
                 tasks={taskList?.tasks?.filter(
