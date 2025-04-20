@@ -69,7 +69,7 @@ class TaskListService:
             query = {"plan_id": plan_obj_id}
 
         task_list_cursor = task_list_collection.find(
-            query).sort("created_at", -1)
+            query)
 
         task_lists_with_tasks = []
         async for task_list in task_list_cursor:

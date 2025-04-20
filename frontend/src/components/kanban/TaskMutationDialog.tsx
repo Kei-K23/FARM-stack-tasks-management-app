@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ITask, TaskList } from "@/lib/types";
+import type { TaskList } from "@/lib/types";
 import {
   Popover,
   PopoverContent,
@@ -29,20 +29,19 @@ import {
 } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
 
-interface NewTaskDialogProps {
+interface TaskListMutationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTask: (task: Omit<ITask, "_id">) => void;
   columns: TaskList[];
   isLoadingColumns: boolean;
 }
 
-export function NewTaskDialog({
+export function TaskListMutationDialog({
   open,
   onOpenChange,
   columns,
   isLoadingColumns,
-}: NewTaskDialogProps) {
+}: TaskListMutationDialogProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("todo");
@@ -215,7 +214,7 @@ export function NewTaskDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="submit">Add Task</Button>
+            <Button type="submit">Save</Button>
           </DialogFooter>
         </form>
       </DialogContent>

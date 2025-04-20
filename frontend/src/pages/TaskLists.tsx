@@ -15,10 +15,10 @@ import { Button } from "@/components/ui/button";
 import type { ITask, Plan } from "@/lib/types";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { KanbanTask } from "@/components/kanban/KanbanTask";
-import { NewTaskDialog } from "@/components/kanban/NewTaskDialog";
 import { useParams } from "react-router";
 import api from "@/lib/axios";
 import { useQuery } from "@tanstack/react-query";
+import { TaskListMutationDialog } from "@/components/kanban/TaskListMutationDialog";
 
 export default function TaskLists() {
   let { plan_id } = useParams();
@@ -213,13 +213,13 @@ export default function TaskLists() {
         </DndContext>
       </main>
 
-      <NewTaskDialog
-        open={isNewTaskDialogOpen}
-        onOpenChange={setIsNewTaskDialogOpen}
-        onAddTask={handleAddTask}
-        columns={plan?.task_lists!}
-        isLoadingColumns={isLoading}
-      />
+      {plan_id && (
+        <TaskListMutationDialog
+          open={isNewTaskDialogOpen}
+          onOpenChange={setIsNewTaskDialogOpen}
+          plan_id={plan_id!}
+        />
+      )}
     </div>
   );
 }
