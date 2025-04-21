@@ -12,7 +12,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { ITask, Plan } from "@/lib/types";
+import type { Task, Plan } from "@/lib/types";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { KanbanTask } from "@/components/kanban/KanbanTask";
 import { useParams } from "react-router";
@@ -32,7 +32,7 @@ export default function TaskLists() {
     retry: false,
   });
 
-  const [tasks, setTasks] = useState<ITask[]>(() => {
+  const [tasks, setTasks] = useState<Task[]>(() => {
     // Try to load from localStorage on client side
     if (typeof window !== "undefined") {
       const savedTasks = localStorage.getItem("kanban-tasks");
@@ -81,7 +81,7 @@ export default function TaskLists() {
       },
     ];
   });
-  const [activeTask, setActiveTask] = useState<ITask | null>(null);
+  const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
 
   const sensors = useSensors(
@@ -156,8 +156,8 @@ export default function TaskLists() {
     }
   }
 
-  function handleAddTask(task: Omit<ITask, "_id">) {
-    const newTask: ITask = {
+  function handleAddTask(task: Omit<Task, "_id">) {
+    const newTask: Task = {
       ...task,
       _id: `task-${Date.now()}`,
     };
@@ -170,7 +170,7 @@ export default function TaskLists() {
     setTasks((prev) => prev.filter((task) => task._id !== taskId));
   }
 
-  function handleEditTask(updatedTask: ITask) {
+  function handleEditTask(updatedTask: Task) {
     setTasks((prev) =>
       prev.map((task) => (task._id === updatedTask._id ? updatedTask : task))
     );

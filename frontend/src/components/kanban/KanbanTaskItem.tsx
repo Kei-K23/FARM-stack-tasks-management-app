@@ -1,8 +1,7 @@
-import { useState } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Edit3, MoreHorizontal, Trash2 } from "lucide-react";
-import type { ITask } from "@/lib/types";
+import type { Task } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -10,22 +9,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { EditTaskDialog } from "./EditTaskDialog";
 import { KanbanTask } from "./KanbanTask";
 
 interface KanbanTaskItemProps {
-  task: ITask;
-  onDelete: (id: string) => void;
-  onEdit: (task: ITask) => void;
+  task: Task;
+  handleTaskEdit: (task: Task) => void;
+  handleTaskDelete: (taskId: string) => void;
 }
 
 export function KanbanTaskItem({
   task,
-  onDelete,
-  onEdit,
+  handleTaskEdit,
+  handleTaskDelete,
 }: KanbanTaskItemProps) {
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
   const {
     attributes,
     listeners,
@@ -70,24 +66,17 @@ export function KanbanTaskItem({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            <DropdownMenuItem onClick={() => handleTaskEdit(task)}>
               <Edit3 className="h-4 w-4" />
               Edit
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(task._id)}>
+            <DropdownMenuItem onClick={() => handleTaskDelete(task._id)}>
               <Trash2 className="h-4 w-4" />
               Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-
-      <EditTaskDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        task={task}
-        onSave={onEdit}
-      />
     </>
   );
 }

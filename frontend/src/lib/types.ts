@@ -1,12 +1,3 @@
-export interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  assignee: string;
-}
-
 export interface TaskStatus {
   _id: string;
   title: string;
@@ -33,7 +24,7 @@ export interface Token {
   user: User;
 }
 
-export interface ITask {
+export interface Task {
   _id: string;
   title: string;
   description: string;
@@ -52,7 +43,7 @@ export interface TaskList {
   plan_id: string;
   created_at: Date;
   updated_at: Date;
-  tasks: ITask[];
+  tasks: Task[];
 }
 
 export interface Plan {

@@ -31,12 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
+import { Task } from "@/lib/types";
+import { useEffect, useState } from "react";
 
 interface TaskMutationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   task_list_id: string;
   plan_id: string;
+  task?: Task | null;
 }
 
 interface TaskInput {
@@ -62,18 +65,43 @@ export function TaskMutationDialog({
   onOpenChange,
   task_list_id,
   plan_id,
+  task,
 }: TaskMutationDialogProps) {
+  const [isMutationPending, setIsMutationPending] = useState(false);
   const queryclient = useQueryClient();
   const form = useForm<TaskInput>({
     resolver: zodResolver(taskSchema),
     defaultValues: {
-      title: "",
-      description: "",
+      title: task?.title,
+      description: task?.description,
       task_list_id: task_list_id,
+      priority: task?.priority,
+      due_date: new Date(task?.due_date!),
+      status: task?.status,
     },
   });
 
-  const mutation = useMutation({
+  const updateMutation = useMutation({
+    mutationFn: (data: TaskInput) =>
+      api
+        .patch(
+          `/api/v1/plans/${plan_id}/task-lists/${task_list_id}/tasks/${task?._id}`,
+          data
+        )
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("Task updated successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
+
+  const createMutation = useMutation({
     mutationFn: (data: TaskInput) =>
       api
         .post(`/api/v1/plans/${plan_id}/task-lists/${task_list_id}/tasks`, data)
@@ -83,7 +111,6 @@ export function TaskMutationDialog({
       await queryclient.invalidateQueries({
         queryKey: ["plans", plan_id, "include_all"],
       });
-      form.reset();
       onOpenChange(false);
     },
     onError: (err: any) => {
@@ -92,8 +119,28 @@ export function TaskMutationDialog({
   });
 
   function onSubmit(data: TaskInput) {
-    mutation.mutate(data);
+    if (!!task) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   }
+
+  useEffect(() => {
+    form.setValue("title", task?.title || "");
+    form.setValue("description", task?.description || "");
+    form.setValue("status", task?.status || "");
+    form.setValue("priority", task?.priority || "");
+    form.setValue("due_date", new Date(task?.due_date!));
+  }, [task]);
+
+  useEffect(() => {
+    setIsMutationPending(createMutation.isPending || updateMutation.isPending);
+
+    return () => {
+      form.reset();
+    };
+  }, [createMutation.isPending, updateMutation.isPending]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -116,7 +163,7 @@ export function TaskMutationDialog({
                     <FormControl>
                       <Input
                         id="title"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python"
                         {...field}
                       />
@@ -134,7 +181,7 @@ export function TaskMutationDialog({
                     <FormControl>
                       <Textarea
                         id="description"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python for AI/ML"
                         {...field}
                       />
@@ -149,7 +196,11 @@ export function TaskMutationDialog({
                 render={({ field }) => (
                   <FormItem className="flex flex-col">
                     <FormLabel>Due Date</FormLabel>
-                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <DatePicker
+                      disabled={isMutationPending}
+                      value={field.value}
+                      onChange={field.onChange}
+                    />
                     <FormMessage />
                   </FormItem>
                 )}
@@ -165,7 +216,10 @@ export function TaskMutationDialog({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger
+                          className="w-full"
+                          disabled={isMutationPending}
+                        >
                           <SelectValue placeholder="Select task priority" />
                         </SelectTrigger>
                       </FormControl>
@@ -190,7 +244,10 @@ export function TaskMutationDialog({
                       defaultValue={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger className="w-full">
+                        <SelectTrigger
+                          className="w-full"
+                          disabled={isMutationPending}
+                        >
                           <SelectValue placeholder="Select task priority" />
                         </SelectTrigger>
                       </FormControl>
@@ -205,7 +262,9 @@ export function TaskMutationDialog({
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isMutationPending}>
+                Save
+              </Button>
             </DialogFooter>
           </form>
         </Form>

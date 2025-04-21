@@ -5,33 +5,59 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
-import type { ITask, TaskStatus } from "@/lib/types";
+import type { Task, TaskStatus } from "@/lib/types";
 import { KanbanTaskItem } from "./KanbanTaskItem";
 import { TaskMutationDialog } from "./TaskMutationDialog";
 import { Button } from "../ui/button";
 import { PlusCircle } from "lucide-react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import api from "@/lib/axios";
+import { toast } from "sonner";
 
 interface KanbanColumnProps {
   column: TaskStatus;
-  tasks: ITask[];
+  tasks: Task[];
   plan_id: string;
   onDeleteTask: (id: string) => void;
-  onEditTask: (task: ITask) => void;
+  onEditTask: (task: Task) => void;
 }
 
-export function KanbanColumn({
-  column,
-  tasks,
-  plan_id,
-  onDeleteTask,
-  onEditTask,
-}: KanbanColumnProps) {
+export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
+  const queryclient = useQueryClient();
   // Column = Task List
   const { setNodeRef, isOver } = useDroppable({
     id: column._id,
   });
   const [open, setOpen] = useState(false);
+  const [editTask, setEditTask] = useState<Task | null>(null);
   const taskIds = useMemo(() => tasks.map((task) => task._id), [tasks]);
+
+  const handleTaskEdit = (task: Task) => {
+    setEditTask(task);
+    setOpen(true);
+  };
+
+  const deleteMutation = useMutation({
+    mutationFn: (taskId: string) =>
+      api
+        .delete(
+          `/api/v1/plans/${plan_id}/task-lists/${column._id}/tasks/${taskId}`
+        )
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("Task deleted successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
+
+  function handleTaskDelete(taskId: string) {
+    deleteMutation.mutate(taskId);
+  }
 
   return (
     <>
@@ -69,8 +95,8 @@ export function KanbanColumn({
               <KanbanTaskItem
                 key={task._id}
                 task={task}
-                onDelete={onDeleteTask}
-                onEdit={onEditTask}
+                handleTaskEdit={handleTaskEdit}
+                handleTaskDelete={handleTaskDelete}
               />
             ))}
           </SortableContext>
@@ -81,6 +107,7 @@ export function KanbanColumn({
         plan_id={plan_id}
         onOpenChange={setOpen}
         open={open}
+        task={editTask}
       />
     </>
   );

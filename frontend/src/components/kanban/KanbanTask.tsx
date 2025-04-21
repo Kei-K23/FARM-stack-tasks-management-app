@@ -6,11 +6,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { ITask } from "@/lib/types";
+import type { Task } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface KanbanTaskProps {
-  task: ITask;
+  task: Task;
 }
 
 export function KanbanTask({ task }: KanbanTaskProps) {

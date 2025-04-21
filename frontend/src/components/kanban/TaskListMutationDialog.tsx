@@ -23,6 +23,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/axios";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 interface TaskListMutationDialogProps {
   open: boolean;
@@ -76,6 +77,13 @@ export function TaskListMutationDialog({
   function onSubmit(data: TaskListInput) {
     mutation.mutate(data);
   }
+
+  useEffect(() => {
+    return () => {
+      // Clear the form
+      form.reset();
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

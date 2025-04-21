@@ -53,6 +53,9 @@ class TaskService:
     async def update(task_id: str, data: TaskUpdate):
         update_data = data.model_dump(exclude_unset=True)
         update_data["updated_at"] = datetime.utcnow()
+        if update_data.get("task_list_id"):
+            update_data["task_list_id"] = ObjectId(
+                update_data.get("task_list_id"))
 
         result = await task_collection.update_one({"_id": ObjectId(task_id)}, {"$set": update_data})
 
