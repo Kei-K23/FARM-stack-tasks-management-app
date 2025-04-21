@@ -24,14 +24,17 @@ import {
   FormMessage,
 } from "../ui/form";
 import { useAuth } from "@/lib/auth";
+import { Plan } from "@/lib/types";
+import { useEffect, useState } from "react";
 
-interface PlanMutationDialogInput {
+interface PlanInput {
   title: string;
   description: string;
   user_id: string;
 }
 
 interface PlanMutationDialogProps {
+  plan?: Plan | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
@@ -45,20 +48,22 @@ const planMutationSchema = z.object({
 export function PlanMutationDialog({
   open,
   onOpenChange,
+  plan,
 }: PlanMutationDialogProps) {
+  const [isMutationPending, setIsMutationPending] = useState(false);
   const auth = useAuth();
   const queryclient = useQueryClient();
-  const form = useForm<PlanMutationDialogInput>({
+  const form = useForm<PlanInput>({
     resolver: zodResolver(planMutationSchema),
     defaultValues: {
-      title: "",
-      description: "",
+      title: plan?.title || "",
+      description: plan?.description || "",
       user_id: auth.user?._id,
     },
   });
 
-  const mutation = useMutation({
-    mutationFn: (data: PlanMutationDialogInput) =>
+  const createMutation = useMutation({
+    mutationFn: (data: PlanInput) =>
       api.post("/api/v1/plans", data).then((res) => res),
     onSuccess: async () => {
       toast.success("New plan added");
@@ -73,9 +78,42 @@ export function PlanMutationDialog({
     },
   });
 
-  function onSubmit(data: PlanMutationDialogInput) {
-    mutation.mutate(data);
+  const updateMutation = useMutation({
+    mutationFn: (data: PlanInput) =>
+      api.patch("/api/v1/plans", data).then((res) => res),
+    onSuccess: async () => {
+      toast.success("Plan updated successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", "include_all"],
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
+
+  function onSubmit(data: PlanInput) {
+    if (!!plan) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   }
+
+  useEffect(() => {
+    form.setValue("title", plan?.title || "");
+    form.setValue("description", plan?.description || "");
+  }, [plan]);
+
+  useEffect(() => {
+    setIsMutationPending(createMutation.isPending || updateMutation.isPending);
+
+    return () => {
+      form.reset();
+    };
+  }, [createMutation.isPending, updateMutation.isPending]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -98,7 +136,7 @@ export function PlanMutationDialog({
                     <FormControl>
                       <Input
                         id="title"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python"
                         {...field}
                       />
@@ -116,7 +154,7 @@ export function PlanMutationDialog({
                     <FormControl>
                       <Textarea
                         id="description"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python for AI/ML"
                         {...field}
                       />

@@ -1,4 +1,4 @@
-from ..db.mongo import plan_collection
+from ..db.mongo import plan_collection, task_list_collection, task_collection
 from ..schemas.plan import PlanCreate, PlanResponse, PlanUpdate
 from ..schemas.common import prepare_mongo_document
 from ..models.plan import Plan
@@ -55,9 +55,20 @@ class PlanService:
 
     @staticmethod
     async def delete(plan_id: str):
+        # 1. Delete the Plan
         result = await plan_collection.delete_one({"_id": ObjectId(plan_id)})
         if result.deleted_count == 0:
-            raise HTTPException(
-                status_code=404, detail="Plan not found")
+            raise HTTPException(status_code=404, detail="Plan not found")
 
-        return {"message": "Plan deleted successfully"}
+        # 2. Find all TaskLists under the Plan
+        task_lists = await task_list_collection.find({"plan_id": ObjectId(plan_id)}).to_list(length=None)
+        task_list_ids = [task_list["_id"] for task_list in task_lists]
+
+        # 3. Delete all Tasks under those TaskLists
+        if task_list_ids:
+            await task_collection.delete_many({"task_list_id": {"$in": task_list_ids}})
+
+        # 4. Delete all TaskLists under the Plan
+        await task_list_collection.delete_many({"plan_id": ObjectId(plan_id)})
+
+        return {"message": "Plan and associated TaskLists and Tasks deleted successfully"}

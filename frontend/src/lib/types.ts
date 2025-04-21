@@ -28,6 +28,7 @@ export interface Task {
   _id: string;
   title: string;
   description: string;
+  sort_number: number;
   task_list_id: string;
   due_date: Date;
   priority: string;

@@ -24,12 +24,23 @@ class TaskUpdate(BaseModel):
     status: Optional[str] = None
 
 
+class TaskBulkUpdateItem(BaseModel):
+    id: str
+    task_list_id: str
+    sort_number: int
+
+
+class TaskBulkUpdateRequest(BaseModel):
+    tasks: List[TaskBulkUpdateItem]
+
+
 class TaskResponse(BaseModel):
     id: PyObjectId = Field(alias="_id")
     title: str
     description: str
     task_list_id: PyObjectId = Field(alias="task_list_id")
     due_date: datetime
+    sort_number: int
     priority: str
     status: str
     created_at: Optional[datetime]

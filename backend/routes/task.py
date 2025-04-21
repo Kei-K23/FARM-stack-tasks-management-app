@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Query
-from ..schemas.task import TaskResponse, TaskCreate, TaskUpdate, TaskPaginationResponse
+from ..schemas.task import TaskResponse, TaskCreate, TaskUpdate, TaskPaginationResponse, TaskBulkUpdateRequest
 from ..services.task import TaskService
 
 router = APIRouter(prefix="/api/v1/plans", tags=["Tasks"])
@@ -30,3 +30,8 @@ async def update_task(task_id: str, data: TaskUpdate):
 @router.delete("/{plan_id}/task-lists/{task_list_id}/tasks/{task_id}", name="Delete the task")
 async def delete_task(task_id: str):
     return await TaskService.delete(task_id=task_id)
+
+
+@router.post("/{plan_id}/task-lists/bulk-sorting-update", name="Tasks bulk sorting")
+async def bulk_update_tasks(data: TaskBulkUpdateRequest):
+    return await TaskService.bulk_update(data)

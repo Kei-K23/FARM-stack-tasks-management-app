@@ -1,16 +1,25 @@
 from ..db.mongo import task_collection
-from ..schemas.task import TaskCreate, TaskResponse, TaskUpdate
+from ..schemas.task import TaskCreate, TaskResponse, TaskUpdate, TaskBulkUpdateRequest
 from ..schemas.common import prepare_mongo_document
 from ..models.task import Task
 from fastapi import HTTPException
 from datetime import datetime
 from bson import ObjectId
+from pymongo import UpdateOne
 
 
 class TaskService:
     @staticmethod
     async def create(task: TaskCreate):
-        task_data = Task(title=task.title, description=task.description, task_list_id=task.task_list_id, priority=task.priority, status=task.status, due_date=task.due_date,
+        last_task = await task_collection.find_one(
+            {"task_list_id": ObjectId(task.task_list_id)},
+            sort=[("sort_number", -1)]
+        )
+
+        next_sort_number = (last_task.get(
+            "sort_number", 0) + 1) if last_task else 0
+
+        task_data = Task(title=task.title, description=task.description, task_list_id=task.task_list_id, priority=task.priority, status=task.status, due_date=task.due_date, sort_number=next_sort_number,
                          created_at=datetime.utcnow(), updated_at=datetime.utcnow()).model_dump()
         result = await task_collection.insert_one(task_data)
         task_data["_id"] = result.inserted_id
@@ -72,3 +81,34 @@ class TaskService:
                 status_code=404, detail="Task not found")
 
         return {"message": "Task deleted successfully"}
+
+    @staticmethod
+    async def bulk_update(data: TaskBulkUpdateRequest):
+        bulk_ops = []
+
+        for item in data.tasks:
+            try:
+                bulk_ops.append(
+                    UpdateOne(
+                        {"_id": ObjectId(item.id)},
+                        {
+                            "$set": {
+                                "task_list_id": ObjectId(item.task_list_id),
+                                "sort_number": item.sort_number,
+                                "updated_at": datetime.utcnow(),
+                            }
+                        }
+                    )
+                )
+            except Exception as e:
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid ID format: {e}")
+
+        if bulk_ops:
+            result = await task_collection.bulk_write(bulk_ops)
+            return {
+                "matched": result.matched_count,
+                "modified": result.modified_count,
+            }
+
+        return {"matched": 0, "modified": 0}

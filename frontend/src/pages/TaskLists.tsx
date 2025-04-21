@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -33,55 +33,7 @@ export default function TaskLists() {
     retry: false,
   });
 
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    // Try to load from localStorage on client side
-    if (typeof window !== "undefined") {
-      const savedTasks = localStorage.getItem("kanban-tasks");
-      if (savedTasks) {
-        try {
-          return JSON.parse(savedTasks);
-        } catch (e) {
-          console.error("Failed to parse saved tasks", e);
-        }
-      }
-    }
-
-    // Default tasks
-    return [
-      {
-        _id: "task-1",
-        title: "Research competitors",
-        description: "Analyze top 5 competitors in the market",
-        status: "todo",
-        priority: "medium",
-        assignee: "Alex",
-      },
-      {
-        _id: "task-2",
-        title: "Design homepage mockup",
-        description: "Create wireframes for the new homepage",
-        status: "in-progress",
-        priority: "high",
-        assignee: "Sam",
-      },
-      {
-        _id: "task-3",
-        title: "Fix navigation bug",
-        description: "Mobile menu doesn't close when clicking outside",
-        status: "review",
-        priority: "high",
-        assignee: "Taylor",
-      },
-      {
-        _id: "task-4",
-        title: "Update documentation",
-        description: "Add new API endpoints to the docs",
-        status: "done",
-        priority: "low",
-        assignee: "Jordan",
-      },
-    ];
-  });
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [editTaskList, setEditTaskList] = useState<TaskList | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
   const [isTaskListDialogOpen, setIsTaskListDialogOpen] = useState(false);
@@ -93,6 +45,30 @@ export default function TaskLists() {
       },
     })
   );
+
+  const sortMutation = useMutation({
+    mutationFn: (
+      data: {
+        id: string;
+        task_list_id: string;
+        sort_number: number;
+      }[]
+    ) =>
+      api
+        .post(`/api/v1/plans/${plan_id}/task-lists/bulk-sorting-update`, {
+          tasks: data,
+        })
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("Task sorted successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
@@ -110,52 +86,50 @@ export default function TaskLists() {
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find the active task
     const activeTask = tasks.find((task) => task._id === activeId);
     if (!activeTask) return;
 
-    // Check if over a column
     const isOverColumn = plan?.task_lists?.some((col) => col._id === overId);
-    if (isOverColumn) {
-      setTasks((tasks) =>
-        tasks.map((task) => {
-          if (task._id === activeId) {
-            return { ...task, status: overId };
-          }
-          return task;
-        })
+
+    if (isOverColumn && activeTask.task_list_id !== overId) {
+      setTasks((prevTasks) =>
+        prevTasks.map((task) =>
+          task._id === activeId
+            ? {
+                ...task,
+                task_list_id: overId,
+              }
+            : task
+        )
       );
     }
   }
 
+  // Drag handler
   function handleDragEnd(event: DragEndEvent) {
-    setActiveTask(null);
-
     const { active, over } = event;
-    if (!over) return;
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+    if (!over || active.id === over.id) return;
 
-    if (activeId === overId) return;
+    const oldIndex = tasks.findIndex((t) => t._id === active.id);
+    const newIndex = tasks.findIndex((t) => t._id === over.id);
 
-    // Find the tasks in the same column
-    const activeTask = tasks.find((task) => task._id === activeId);
-    if (!activeTask) return;
+    const newTasks = arrayMove(tasks, oldIndex, newIndex).map(
+      (task, index) => ({
+        ...task,
+        sort_number: index,
+      })
+    );
 
-    // If over a task, reorder within the column
-    const isOverTask = tasks.some((task) => task._id === overId);
-    if (isOverTask) {
-      const activeIndex = tasks.findIndex((task) => task._id === activeId);
-      const overIndex = tasks.findIndex((task) => task._id === overId);
-
-      // If tasks are in the same column, reorder them
-      const overTask = tasks[overIndex];
-      if (activeTask.status === overTask.status) {
-        const newTasks = arrayMove(tasks, activeIndex, overIndex);
-        setTasks(newTasks);
-      }
-    }
+    setTasks(newTasks);
+    // Optionally update backend
+    sortMutation.mutate(
+      newTasks.map((task) => ({
+        id: task._id,
+        task_list_id: task.task_list_id,
+        sort_number: task.sort_number,
+      }))
+    );
   }
 
   function handleEditTaskList(taskList: TaskList) {
@@ -183,6 +157,13 @@ export default function TaskLists() {
     deleteMutation.mutate(taskListId);
   }
 
+  useEffect(() => {
+    if (plan?.task_lists) {
+      const allTasks = plan.task_lists.flatMap((list) => list.tasks);
+      setTasks(allTasks);
+    }
+  }, [plan]);
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
@@ -203,9 +184,10 @@ export default function TaskLists() {
           <div className="flex gap-4">
             {plan?.task_lists?.map((taskList) => (
               <KanbanColumn
-                taskList={taskList}
-                plan_id={plan_id!}
                 key={taskList._id}
+                taskList={taskList}
+                tasks={tasks.filter((t) => t.task_list_id === taskList._id)}
+                plan_id={plan_id!}
                 handleTaskListDelete={handleTaskListDelete}
                 handleEditTaskList={handleEditTaskList}
               />

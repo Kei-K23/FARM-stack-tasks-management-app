@@ -22,6 +22,7 @@ import {
 
 interface KanbanColumnProps {
   taskList: TaskList;
+  tasks: Task[];
   plan_id: string;
   handleEditTaskList: (task: TaskList) => void;
   handleTaskListDelete: (taskListId: string) => void;
@@ -30,6 +31,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({
   taskList,
   plan_id,
+  tasks,
   handleEditTaskList,
   handleTaskListDelete,
 }: KanbanColumnProps) {
@@ -41,7 +43,7 @@ export function KanbanColumn({
   const [open, setOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
   const taskIds = useMemo(
-    () => taskList?.tasks.map((task) => task._id),
+    () => tasks.map((task) => task._id),
     [taskList, taskList.tasks]
   );
 
@@ -128,7 +130,7 @@ export function KanbanColumn({
             items={taskIds}
             strategy={verticalListSortingStrategy}
           >
-            {taskList?.tasks?.map((task) => (
+            {tasks?.map((task) => (
               <KanbanTaskItem
                 key={task._id}
                 task={task}
