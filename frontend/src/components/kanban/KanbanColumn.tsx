@@ -5,32 +5,45 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { cn } from "@/lib/utils";
-import type { Task, TaskStatus } from "@/lib/types";
+import type { Task, TaskList } from "@/lib/types";
 import { KanbanTaskItem } from "./KanbanTaskItem";
 import { TaskMutationDialog } from "./TaskMutationDialog";
 import { Button } from "../ui/button";
-import { PlusCircle } from "lucide-react";
+import { Edit3, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "@/lib/axios";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 
 interface KanbanColumnProps {
-  column: TaskStatus;
-  tasks: Task[];
+  taskList: TaskList;
   plan_id: string;
-  onDeleteTask: (id: string) => void;
-  onEditTask: (task: Task) => void;
+  handleEditTaskList: (task: TaskList) => void;
+  handleTaskListDelete: (taskListId: string) => void;
 }
 
-export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
+export function KanbanColumn({
+  taskList,
+  plan_id,
+  handleEditTaskList,
+  handleTaskListDelete,
+}: KanbanColumnProps) {
   const queryclient = useQueryClient();
   // Column = Task List
   const { setNodeRef, isOver } = useDroppable({
-    id: column._id,
+    id: taskList._id,
   });
   const [open, setOpen] = useState(false);
   const [editTask, setEditTask] = useState<Task | null>(null);
-  const taskIds = useMemo(() => tasks.map((task) => task._id), [tasks]);
+  const taskIds = useMemo(
+    () => taskList?.tasks.map((task) => task._id),
+    [taskList, taskList.tasks]
+  );
 
   const handleTaskEdit = (task: Task) => {
     setEditTask(task);
@@ -41,7 +54,7 @@ export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
     mutationFn: (taskId: string) =>
       api
         .delete(
-          `/api/v1/plans/${plan_id}/task-lists/${column._id}/tasks/${taskId}`
+          `/api/v1/plans/${plan_id}/task-lists/${taskList._id}/tasks/${taskId}`
         )
         .then((res) => res),
     onSuccess: async () => {
@@ -70,20 +83,44 @@ export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
       >
         <div className="flex items-center justify-between p-2">
           <div className="flex items-center gap-x-3">
-            <h3 className="font-medium">{column.title}</h3>
+            <h3 className="font-medium">{taskList.title}</h3>
             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs">
-              {tasks.length}
+              {taskList.tasks.length}
             </span>
           </div>
-          <Button
-            size={"sm"}
-            variant={"outline"}
-            onClick={() => {
-              setOpen(true);
-            }}
-          >
-            <PlusCircle />
-          </Button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                size={"sm"}
+                variant={"outline"}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="sr-only">Open menu</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setOpen(true);
+                }}
+              >
+                <Plus className="h-4 w-4" />
+                Add Task
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEditTaskList(taskList)}>
+                <Edit3 className="h-4 w-4" />
+                Edit
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => handleTaskListDelete(taskList._id)}
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div className="flex-1 overflow-y-auto">
@@ -91,7 +128,7 @@ export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
             items={taskIds}
             strategy={verticalListSortingStrategy}
           >
-            {tasks.map((task) => (
+            {taskList?.tasks?.map((task) => (
               <KanbanTaskItem
                 key={task._id}
                 task={task}
@@ -103,7 +140,7 @@ export function KanbanColumn({ column, tasks, plan_id }: KanbanColumnProps) {
         </div>
       </div>
       <TaskMutationDialog
-        task_list_id={column._id}
+        task_list_id={taskList._id}
         plan_id={plan_id}
         onOpenChange={setOpen}
         open={open}

@@ -114,5 +114,6 @@ class TaskListService:
         if result.deleted_count == 0:
             raise HTTPException(
                 status_code=404, detail="Task list not found")
+        await task_collection.delete_many({"task_list_id": ObjectId(task_list_id)})
 
         return {"message": "Task list deleted successfully"}

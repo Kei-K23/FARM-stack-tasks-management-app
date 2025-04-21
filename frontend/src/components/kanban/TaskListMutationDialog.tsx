@@ -23,12 +23,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import api from "@/lib/axios";
 import { toast } from "sonner";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { TaskList } from "@/lib/types";
 
 interface TaskListMutationDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   plan_id: string;
+  taskList?: TaskList | null;
 }
 
 interface TaskListInput {
@@ -47,18 +49,20 @@ export function TaskListMutationDialog({
   open,
   onOpenChange,
   plan_id,
+  taskList,
 }: TaskListMutationDialogProps) {
+  const [isMutationPending, setIsMutationPending] = useState(false);
   const queryclient = useQueryClient();
   const form = useForm<TaskListInput>({
     resolver: zodResolver(taskListSchema),
     defaultValues: {
-      title: "",
-      description: "",
+      title: taskList?.title || "",
+      description: taskList?.description || "",
       plan_id: plan_id,
     },
   });
 
-  const mutation = useMutation({
+  const createMutation = useMutation({
     mutationFn: (data: TaskListInput) =>
       api.post(`/api/v1/plans/${plan_id}/task-lists`, data).then((res) => res),
     onSuccess: async () => {
@@ -74,16 +78,43 @@ export function TaskListMutationDialog({
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: (data: TaskListInput) =>
+      api
+        .patch(`/api/v1/plans/${plan_id}/task-lists/${taskList?._id}`, data)
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("Task list updated successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+      form.reset();
+      onOpenChange(false);
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
+
   function onSubmit(data: TaskListInput) {
-    mutation.mutate(data);
+    if (!!taskList) {
+      updateMutation.mutate(data);
+    } else {
+      createMutation.mutate(data);
+    }
   }
+  useEffect(() => {
+    form.setValue("title", taskList?.title || "");
+    form.setValue("description", taskList?.description || "");
+  }, [taskList]);
 
   useEffect(() => {
+    setIsMutationPending(createMutation.isPending || updateMutation.isPending);
+
     return () => {
-      // Clear the form
       form.reset();
     };
-  }, []);
+  }, [createMutation.isPending, updateMutation.isPending]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,7 +138,7 @@ export function TaskListMutationDialog({
                     <FormControl>
                       <Input
                         id="title"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python"
                         {...field}
                       />
@@ -125,7 +156,7 @@ export function TaskListMutationDialog({
                     <FormControl>
                       <Textarea
                         id="description"
-                        disabled={mutation.isPending}
+                        disabled={isMutationPending}
                         placeholder="Learn Python for AI/ML"
                         {...field}
                       />
@@ -136,7 +167,9 @@ export function TaskListMutationDialog({
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Save</Button>
+              <Button type="submit" disabled={isMutationPending}>
+                Save
+              </Button>
             </DialogFooter>
           </form>
         </Form>

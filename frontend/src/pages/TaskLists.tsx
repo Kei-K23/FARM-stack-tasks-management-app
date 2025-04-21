@@ -12,17 +12,18 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { PlusCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Task, Plan } from "@/lib/types";
+import type { Task, Plan, TaskList } from "@/lib/types";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { KanbanTask } from "@/components/kanban/KanbanTask";
 import { useParams } from "react-router";
 import api from "@/lib/axios";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { TaskListMutationDialog } from "@/components/kanban/TaskListMutationDialog";
+import { toast } from "sonner";
 
 export default function TaskLists() {
   let { plan_id } = useParams();
-
+  const queryclient = useQueryClient();
   const { data: plan } = useQuery<Plan>({
     queryKey: ["plans", plan_id, "include_all"],
     queryFn: async () => {
@@ -81,8 +82,9 @@ export default function TaskLists() {
       },
     ];
   });
+  const [editTaskList, setEditTaskList] = useState<TaskList | null>(null);
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [isNewTaskDialogOpen, setIsNewTaskDialogOpen] = useState(false);
+  const [isTaskListDialogOpen, setIsTaskListDialogOpen] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -156,31 +158,36 @@ export default function TaskLists() {
     }
   }
 
-  function handleAddTask(task: Omit<Task, "_id">) {
-    const newTask: Task = {
-      ...task,
-      _id: `task-${Date.now()}`,
-    };
-
-    setTasks((prev) => [...prev, newTask]);
-    setIsNewTaskDialogOpen(false);
+  function handleEditTaskList(taskList: TaskList) {
+    setEditTaskList(taskList);
+    setIsTaskListDialogOpen(true);
   }
 
-  function handleDeleteTask(taskId: string) {
-    setTasks((prev) => prev.filter((task) => task._id !== taskId));
-  }
+  const deleteMutation = useMutation({
+    mutationFn: (taskListId: string) =>
+      api
+        .delete(`/api/v1/plans/${plan_id}/task-lists/${taskListId}`)
+        .then((res) => res),
+    onSuccess: async () => {
+      toast.success("Task list deleted successfully");
+      await queryclient.invalidateQueries({
+        queryKey: ["plans", plan_id, "include_all"],
+      });
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error?.message || "An error occurred");
+    },
+  });
 
-  function handleEditTask(updatedTask: Task) {
-    setTasks((prev) =>
-      prev.map((task) => (task._id === updatedTask._id ? updatedTask : task))
-    );
+  function handleTaskListDelete(taskListId: string) {
+    deleteMutation.mutate(taskListId);
   }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-4 md:px-6">
         <h1 className="text-xl font-semibold">{plan?.title}</h1>
-        <Button onClick={() => setIsNewTaskDialogOpen(true)}>
+        <Button onClick={() => setIsTaskListDialogOpen(true)}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Add Task List
         </Button>
@@ -196,14 +203,11 @@ export default function TaskLists() {
           <div className="flex gap-4">
             {plan?.task_lists?.map((taskList) => (
               <KanbanColumn
+                taskList={taskList}
                 plan_id={plan_id!}
                 key={taskList._id}
-                column={taskList}
-                tasks={taskList?.tasks?.filter(
-                  (task) => task.task_list_id === taskList._id
-                )}
-                onDeleteTask={handleDeleteTask}
-                onEditTask={handleEditTask}
+                handleTaskListDelete={handleTaskListDelete}
+                handleEditTaskList={handleEditTaskList}
               />
             ))}
           </div>
@@ -216,9 +220,10 @@ export default function TaskLists() {
 
       {plan_id && (
         <TaskListMutationDialog
-          open={isNewTaskDialogOpen}
-          onOpenChange={setIsNewTaskDialogOpen}
+          open={isTaskListDialogOpen}
+          onOpenChange={setIsTaskListDialogOpen}
           plan_id={plan_id!}
+          taskList={editTaskList}
         />
       )}
     </div>
