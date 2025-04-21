@@ -38,6 +38,15 @@ A full-stack Tasks Management web application built with **FastAPI**, **React**,
 
 ---
 
+## 📁 Project Screenshots
+
+![img1](/docs/img1.png)
+![img2](/docs/img2.png)
+![img3](/docs/img3.png)
+![img4](/docs/img4.png)
+
+---
+
 ## 📁 Project Structure
 
 ```
